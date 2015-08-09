@@ -32,7 +32,6 @@ PLAYER_HEIGHT = 2
 
 def cube_vertices(x, y, z, n):
     """ Return the vertices of the cube at position x, y, z with size 2*n.
-
     """
     return [
         x-n,y+n,z-n, x-n,y+n,z+n, x+n,y+n,z+n, x+n,y+n,z-n,  # top
@@ -46,7 +45,6 @@ def cube_vertices(x, y, z, n):
 
 def tex_coord(x, y, n=4):
     """ Return the bounding vertices of the texture square.
-
     """
     m = 1.0 / n
     dx = x * m
@@ -56,7 +54,6 @@ def tex_coord(x, y, n=4):
 
 def tex_coords(top, bottom, side):
     """ Return a list of the texture squares for the top, bottom and side.
-
     """
     top = tex_coord(*top)
     bottom = tex_coord(*bottom)
@@ -116,7 +113,7 @@ def sectorize(position):
 
     """
     x, y, z = normalize(position)
-    x, y, z = x / SECTOR_SIZE, y / SECTOR_SIZE, z / SECTOR_SIZE
+    x, y, z = x // SECTOR_SIZE, y // SECTOR_SIZE, z // SECTOR_SIZE
     return (x, 0, z)
 
 
@@ -150,25 +147,22 @@ class Model(object):
         self._initialize()
 
     def _initialize(self):
-        """ Initialize the world by placing all the blocks.
-
-        """
+        """ Initialize the world by placing all the blocks."""
         n = 80  # 1/2 width and height of world
-        s = 1  # step size
         y = 0  # initial y height
-        for x in xrange(-n, n + 1, s):
-            for z in xrange(-n, n + 1, s):
+        for x in range(-n, n + 1):
+            for z in range(-n, n + 1):
                 # create a layer stone an grass everywhere.
                 self.add_block((x, y - 2, z), GRASS, immediate=False)
                 self.add_block((x, y - 3, z), STONE, immediate=False)
                 if x in (-n, n) or z in (-n, n):
                     # create outer walls.
-                    for dy in xrange(-2, 3):
+                    for dy in range(-2, 3):
                         self.add_block((x, y + dy, z), STONE, immediate=False)
 
         # generate the hills randomly
         o = n - 10
-        for _ in xrange(120):
+        for _ in range(120):
             a = random.randint(-o, o)  # x position of the hill
             b = random.randint(-o, o)  # z position of the hill
             c = -1  # base of the hill
@@ -176,9 +170,9 @@ class Model(object):
             s = random.randint(4, 8)  # 2 * s is the side length of the hill
             d = 1  # how quickly to taper off the hills
             t = random.choice([GRASS, SAND, BRICK])
-            for y in xrange(c, c + h):
-                for x in xrange(a - s, a + s + 1):
-                    for z in xrange(b - s, b + s + 1):
+            for y in range(c, c + h):
+                for x in range(a - s, a + s + 1):
+                    for z in range(b - s, b + s + 1):
                         if (x - a) ** 2 + (z - b) ** 2 > (s + 1) ** 2:
                             continue
                         if (x - 0) ** 2 + (z - 0) ** 2 < 5 ** 2:
@@ -199,13 +193,12 @@ class Model(object):
             The line of sight vector.
         max_distance : int
             How many blocks away to search for a hit.
-
         """
         m = 8
         x, y, z = position
         dx, dy, dz = vector
         previous = None
-        for _ in xrange(max_distance * m):
+        for _ in range(max_distance * m):
             key = normalize((x, y, z))
             if key != previous and key in self.world:
                 return key, previous
@@ -214,9 +207,8 @@ class Model(object):
         return None, None
 
     def exposed(self, position):
-        """ Returns False is given `position` is surrounded on all 6 sides by
+        """ Returns False if given `position` is surrounded on all 6 sides by
         blocks, True otherwise.
-
         """
         x, y, z = position
         for dx, dy, dz in FACES:
@@ -236,7 +228,6 @@ class Model(object):
             generate.
         immediate : bool
             Whether or not to draw the block immediately.
-
         """
         if position in self.world:
             self.remove_block(position, immediate)
@@ -256,7 +247,6 @@ class Model(object):
             The (x, y, z) position of the block to remove.
         immediate : bool
             Whether or not to immediately remove block from canvas.
-
         """
         del self.world[position]
         self.sectors[sectorize(position)].remove(position)
@@ -270,7 +260,6 @@ class Model(object):
         state is current. This means hiding blocks that are not exposed and
         ensuring that all exposed blocks are shown. Usually used after a block
         is added or removed.
-
         """
         x, y, z = position
         for dx, dy, dz in FACES:
@@ -294,7 +283,6 @@ class Model(object):
             The (x, y, z) position of the block to show.
         immediate : bool
             Whether or not to show the block immediately.
-
         """
         texture = self.world[position]
         self.shown[position] = texture
@@ -313,7 +301,6 @@ class Model(object):
         texture : list of len 3
             The coordinates of the texture squares. Use `tex_coords()` to
             generate.
-
         """
         x, y, z = position
         vertex_data = cube_vertices(x, y, z, 0.5)
@@ -375,9 +362,9 @@ class Model(object):
         before_set = set()
         after_set = set()
         pad = 4
-        for dx in xrange(-pad, pad + 1):
-            for dy in [0]:  # xrange(-pad, pad + 1):
-                for dz in xrange(-pad, pad + 1):
+        for dx in range(-pad, pad + 1):
+            for dy in [0]:  # range(-pad, pad + 1):
+                for dz in range(-pad, pad + 1):
                     if dx ** 2 + dy ** 2 + dz ** 2 > (pad + 1) ** 2:
                         continue
                     if before:
@@ -571,7 +558,7 @@ class Window(pyglet.window.Window):
             self.sector = sector
         m = 8
         dt = min(dt, 0.2)
-        for _ in xrange(m):
+        for _ in range(m):
             self._update(dt / m)
 
     def _update(self, dt):
@@ -628,14 +615,14 @@ class Window(pyglet.window.Window):
         p = list(position)
         np = normalize(position)
         for face in FACES:  # check all surrounding blocks
-            for i in xrange(3):  # check each dimension independently
+            for i in range(3):  # check each dimension independently
                 if not face[i]:
                     continue
                 # How much overlap you have with this dimension.
                 d = (p[i] - np[i]) * face[i]
                 if d < pad:
                     continue
-                for dy in xrange(height):  # check each height
+                for dy in range(height):  # check each height
                     op = list(np)
                     op[1] -= dy
                     op[i] += face[i]
@@ -754,14 +741,13 @@ class Window(pyglet.window.Window):
 
     def on_resize(self, width, height):
         """ Called when the window is resized to a new `width` and `height`.
-
         """
         # label
         self.label.y = height - 10
         # reticle
         if self.reticle:
             self.reticle.delete()
-        x, y = self.width / 2, self.height / 2
+        x, y = self.width // 2, self.height // 2
         n = 10
         self.reticle = pyglet.graphics.vertex_list(4,
             ('v2i', (x - n, y, x + n, y, x, y - n, x, y + n))
@@ -769,7 +755,6 @@ class Window(pyglet.window.Window):
 
     def set_2d(self):
         """ Configure OpenGL to draw in 2d.
-
         """
         width, height = self.get_size()
         glDisable(GL_DEPTH_TEST)
@@ -789,7 +774,7 @@ class Window(pyglet.window.Window):
         glViewport(0, 0, width, height)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        gluPerspective(65.0, width / float(height), 0.1, 60.0)
+        gluPerspective(65.0, width / height, 0.1, 60.0)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
         x, y = self.rotation
