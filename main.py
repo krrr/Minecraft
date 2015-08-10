@@ -17,7 +17,7 @@ WALKING_SPEED = 5
 FLYING_SPEED = 15
 
 GRAVITY = 20.0
-MAX_JUMP_HEIGHT = 1.0 # About the height of a block.
+MAX_JUMP_HEIGHT = 1.0  # About the height of a block.
 # To derive the formula for calculating jump speed, first solve
 #    v_t = v_0 + a * t
 # for the time at which you achieve maximum height, where a is the acceleration
@@ -29,6 +29,7 @@ JUMP_SPEED = math.sqrt(2 * GRAVITY * MAX_JUMP_HEIGHT)
 TERMINAL_VELOCITY = 50
 
 PLAYER_HEIGHT = 2
+
 
 def cube_vertices(x, y, z, n):
     """ Return the vertices of the cube at position x, y, z with size 2*n.
@@ -73,12 +74,12 @@ BRICK = tex_coords((2, 0), (2, 0), (2, 0))
 STONE = tex_coords((2, 1), (2, 1), (2, 1))
 
 FACES = [
-    ( 0, 1, 0),
-    ( 0,-1, 0),
+    (0, 1, 0),
+    (0, -1, 0),
     (-1, 0, 0),
-    ( 1, 0, 0),
-    ( 0, 0, 1),
-    ( 0, 0,-1),
+    (1, 0, 0),
+    (0, 0, 1),
+    (0, 0, -1)
 ]
 
 
@@ -97,7 +98,7 @@ def normalize(position):
     """
     x, y, z = position
     x, y, z = (int(round(x)), int(round(y)), int(round(z)))
-    return (x, y, z)
+    return x, y, z
 
 
 def sectorize(position):
@@ -114,13 +115,11 @@ def sectorize(position):
     """
     x, y, z = normalize(position)
     x, y, z = x // SECTOR_SIZE, y // SECTOR_SIZE, z // SECTOR_SIZE
-    return (x, 0, z)
+    return x, 0, z
 
 
 class Model(object):
-
     def __init__(self):
-
         # A Batch is a collection of vertex lists for batched rendering.
         self.batch = pyglet.graphics.Batch()
 
@@ -467,7 +466,8 @@ class Window(pyglet.window.Window):
         self.model = Model()
 
         # The label that is displayed in the top left of the canvas.
-        self.label = pyglet.text.Label('', font_name='Arial', font_size=18,
+        self.label = pyglet.text.Label(
+            '', font_name='Arial', font_size=18,
             x=10, y=self.height - 10, anchor_x='left', anchor_y='top',
             color=(0, 0, 0, 255))
 
@@ -475,10 +475,9 @@ class Window(pyglet.window.Window):
         # TICKS_PER_SEC. This is the main game event loop.
         pyglet.clock.schedule_interval(self.update, 1.0 / TICKS_PER_SEC)
 
-    def set_exclusive_mouse(self, exclusive):
+    def set_exclusive_mouse(self, exclusive=True):
         """ If `exclusive` is True, the game will capture the mouse, if False
         the game will ignore the mouse.
-
         """
         super(Window, self).set_exclusive_mouse(exclusive)
         self.exclusive = exclusive
@@ -486,7 +485,6 @@ class Window(pyglet.window.Window):
     def get_sight_vector(self):
         """ Returns the current line of sight vector indicating the direction
         the player is looking.
-
         """
         x, y = self.rotation
         # y ranges from -90 to 90, or -pi/2 to pi/2, so m ranges from 0 to 1 and
@@ -498,7 +496,7 @@ class Window(pyglet.window.Window):
         dy = math.sin(math.radians(y))
         dx = math.cos(math.radians(x - 90)) * m
         dz = math.sin(math.radians(x - 90)) * m
-        return (dx, dy, dz)
+        return dx, dy, dz
 
     def get_motion_vector(self):
         """ Returns the current motion vector indicating the velocity of the
@@ -537,7 +535,7 @@ class Window(pyglet.window.Window):
             dy = 0.0
             dx = 0.0
             dz = 0.0
-        return (dx, dy, dz)
+        return dx, dy, dz
 
     def update(self, dt):
         """ This method is scheduled to be called repeatedly by the pyglet
@@ -573,7 +571,7 @@ class Window(pyglet.window.Window):
         """
         # walking
         speed = FLYING_SPEED if self.flying else WALKING_SPEED
-        d = dt * speed # distance covered this tick.
+        d = dt * speed  # distance covered this tick.
         dx, dy, dz = self.get_motion_vector()
         # New position in space, before accounting for gravity.
         dx, dy, dz = dx * d, dy * d, dz * d
@@ -749,9 +747,8 @@ class Window(pyglet.window.Window):
             self.reticle.delete()
         x, y = self.width // 2, self.height // 2
         n = 10
-        self.reticle = pyglet.graphics.vertex_list(4,
-            ('v2i', (x - n, y, x + n, y, x, y - n, x, y + n))
-        )
+        self.reticle = pyglet.graphics.vertex_list(
+            4, ('v2i', (x - n, y, x + n, y, x, y - n, x, y + n)))
 
     def set_2d(self):
         """ Configure OpenGL to draw in 2d.
@@ -767,7 +764,6 @@ class Window(pyglet.window.Window):
 
     def set_3d(self):
         """ Configure OpenGL to draw in 3d.
-
         """
         width, height = self.get_size()
         glEnable(GL_DEPTH_TEST)
@@ -785,7 +781,6 @@ class Window(pyglet.window.Window):
 
     def on_draw(self):
         """ Called by pyglet to draw the canvas.
-
         """
         self.clear()
         self.set_3d()
@@ -799,7 +794,6 @@ class Window(pyglet.window.Window):
     def draw_focused_block(self):
         """ Draw black edges around the block that is currently under the
         crosshairs.
-
         """
         vector = self.get_sight_vector()
         block = self.model.hit_test(self.position, vector)[0]
@@ -813,7 +807,6 @@ class Window(pyglet.window.Window):
 
     def draw_label(self):
         """ Draw the label in the top left of the screen.
-
         """
         x, y, z = self.position
         self.label.text = '%02d (%.2f, %.2f, %.2f) %d / %d' % (
@@ -823,7 +816,6 @@ class Window(pyglet.window.Window):
 
     def draw_reticle(self):
         """ Draw the crosshairs in the center of the screen.
-
         """
         glColor3d(0, 0, 0)
         self.reticle.draw(GL_LINES)
@@ -831,12 +823,12 @@ class Window(pyglet.window.Window):
 
 def setup_fog():
     """ Configure the OpenGL fog properties.
-
     """
     # Enable fog. Fog "blends a fog color with each rasterized pixel fragment's
     # post-texturing color."
     glEnable(GL_FOG)
     # Set the fog color.
+    # noinspection PyCallingNonCallable
     glFogfv(GL_FOG_COLOR, (GLfloat * 4)(0.5, 0.69, 1.0, 1))
     # Say we have no preference between rendering speed and quality.
     glHint(GL_FOG_HINT, GL_DONT_CARE)
@@ -850,7 +842,6 @@ def setup_fog():
 
 def setup():
     """ Basic OpenGL configuration.
-
     """
     # Set the color of "clear", i.e. the sky, in rgba.
     glClearColor(0.5, 0.69, 1.0, 1)
