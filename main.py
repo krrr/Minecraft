@@ -59,11 +59,7 @@ def tex_coords(top, bottom, side):
     top = tex_coord(*top)
     bottom = tex_coord(*bottom)
     side = tex_coord(*side)
-    result = []
-    result.extend(top)
-    result.extend(bottom)
-    result.extend(side * 4)
-    return result
+    return top + bottom + side * 4
 
 
 TEXTURE_PATH = 'texture.png'
@@ -96,9 +92,7 @@ def normalize(position):
     block_position : tuple of ints of len 3
 
     """
-    x, y, z = position
-    x, y, z = (int(round(x)), int(round(y)), int(round(z)))
-    return x, y, z
+    return tuple(map(lambda x: int(round(x)), position))
 
 
 def sectorize(position):
@@ -113,9 +107,8 @@ def sectorize(position):
     sector : tuple of len 3
 
     """
-    x, y, z = normalize(position)
-    x, y, z = x // SECTOR_SIZE, y // SECTOR_SIZE, z // SECTOR_SIZE
-    return x, 0, z
+    x, __, z = normalize(position)
+    return x // SECTOR_SIZE, 0, z // SECTOR_SIZE
 
 
 class Model(object):
@@ -152,24 +145,24 @@ class Model(object):
         for x in range(-n, n + 1):
             for z in range(-n, n + 1):
                 # create a layer stone an grass everywhere.
-                self.add_block((x, y - 2, z), GRASS, immediate=False)
-                self.add_block((x, y - 3, z), STONE, immediate=False)
+                self.add_block((x, y - PLAYER_HEIGHT, z), GRASS, immediate=False)
+                self.add_block((x, y - PLAYER_HEIGHT - 1, z), STONE, immediate=False)
                 if x in (-n, n) or z in (-n, n):
                     # create outer walls.
-                    for dy in range(-2, 3):
+                    for dy in range(-PLAYER_HEIGHT, 3):
                         self.add_block((x, y + dy, z), STONE, immediate=False)
 
         # generate the hills randomly
         o = n - 10
+        d = 1  # how quickly to taper off the hills
+        base_y = y - PLAYER_HEIGHT + 1  # base of the hill
         for _ in range(120):
             a = random.randint(-o, o)  # x position of the hill
             b = random.randint(-o, o)  # z position of the hill
-            c = -1  # base of the hill
             h = random.randint(1, 6)  # height of the hill
             s = random.randint(4, 8)  # 2 * s is the side length of the hill
-            d = 1  # how quickly to taper off the hills
             t = random.choice([GRASS, SAND, BRICK])
-            for y in range(c, c + h):
+            for y in range(base_y, base_y + h):
                 for x in range(a - s, a + s + 1):
                     for z in range(b - s, b + s + 1):
                         if (x - a) ** 2 + (z - b) ** 2 > (s + 1) ** 2:
@@ -177,7 +170,7 @@ class Model(object):
                         if (x - 0) ** 2 + (z - 0) ** 2 < 5 ** 2:
                             continue
                         self.add_block((x, y, z), t, immediate=False)
-                s -= d  # decrement side lenth so hills taper off
+                s -= d  # decrement side length so hills taper off
 
     def hit_test(self, position, vector, max_distance=8):
         """ Line of sight search from current position. If a block is
@@ -432,6 +425,8 @@ class Window(pyglet.window.Window):
 
         # Current (x, y, z) position in the world, specified with floats. Note
         # that, perhaps unlike in math class, the y-axis is the vertical axis.
+        # This is position of player's head, for example when PLAYER_HEIGHT == 2,
+        # play's leg is at (0, -1, 0), and the block under player's foot is at (0, -2, 0)
         self.position = (0, 0, 0)
 
         # First element is rotation of the player in the x-z plane (ground
@@ -809,7 +804,7 @@ class Window(pyglet.window.Window):
         """ Draw the label in the top left of the screen.
         """
         x, y, z = self.position
-        self.label.text = '%02d (%.2f, %.2f, %.2f) %d / %d' % (
+        self.label.text = '%dFPS (%.2f, %.2f, %.2f) %d / %d' % (
             pyglet.clock.get_fps(), x, y, z,
             len(self.model._shown), len(self.model.world))
         self.label.draw()
